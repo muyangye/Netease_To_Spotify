@@ -1,0 +1,7 @@
+---
+  client_id : "YOUR_CLIENT_ID_HERE"
+  client_secret : "YOUR_CLIENT_SECRET_HERE"
+  redirect_uri : "YOUR_REDIRECT_URI_HERE"
+  spotify_playlist_name : "DESIRED_SPOTIFY_PLAYLIST_NAME"
+  cover_image_path : "DESIRED_SPOTIFY_PLAYLIST_COVER_IMAGE_PATH"
+  netease_playlist_id : "YOUR_NETEASE_PLAYLIST_ID_TO_MIGRATE"
