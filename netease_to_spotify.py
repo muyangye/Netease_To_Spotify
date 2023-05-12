@@ -2,6 +2,7 @@ from pyncm import apis
 import spotipy
 import yaml
 import base64
+import sys
 
 class NeteaseToSpotify:
     def __init__(self):
@@ -17,7 +18,9 @@ class NeteaseToSpotify:
                     )
                 )
             except:
-                print("Spotify授权失败, 终止程序")
+                # print("Spotify授权失败, 终止程序")
+                print("Spotify authorization failed, program terminated.")
+                sys.exit()
             self.spotify_playlist_name = config["spotify_playlist_name"]
             # Use netease.png as default Spotify playlist cover image
             self.cover_image_path = config["cover_image_path"] if config["cover_image_path"] != "DESIRED_SPOTIFY_PLAYLIST_COVER_IMAGE_PATH" else "netease.png"
@@ -37,7 +40,8 @@ class NeteaseToSpotify:
                 track_id = self.search_for_track(name, artist)
                 self.spotify.playlist_add_items(spotify_playlist_id, [track_id])
             except Exception as e:
-                print("此歌曲Spotify无版权, 迁移失败: " + name + ", " + artist)
+                # print("此歌曲Spotify无版权, 迁移失败: " + name + ", " + artist)
+                print("Spotify does not have this track's copyright: " + name + ", " + artist)
     
     def get_or_create_playlist(self):
         """
@@ -65,11 +69,13 @@ class NeteaseToSpotify:
         :rtype: str
         """
         playlist_id = self.spotify.user_playlist_create(self.spotify.me()["id"], self.spotify_playlist_name)["id"]
-        b64_cover_image = self.get_base64_from_image(self.cover_image_path)
         try:
+            b64_cover_image = self.get_base64_from_image(self.cover_image_path)
             self.spotify.playlist_upload_cover_image(playlist_id, b64_cover_image)
         except Exception as e:
-            print("创建Spotify歌单失败(无法上传歌单封面图像), 终止程序")
+            # print("创建Spotify歌单失败(歌单封面图像不存在或过大), 终止程序")
+            print("Failed to create Spotify playlist (can't find cover_image_path or image is too large), program terminated.")
+            sys.exit()
         return playlist_id
     
     def get_base64_from_image(self, path):
