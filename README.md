@@ -5,7 +5,7 @@
 ## 测试成功率: 593/595, 用时: 一分钟左右，已知所有的迁移库中最快成功率最高，保留原歌单顺序，全过程不产生费用
 
 ## 运行
-0. 请确保使用支持中文的命令行(如VSCode)，否则如果歌单里有中文歌名/歌手的歌且此歌曲因在Spotify无版权，程序会因提示此歌曲无版权而爆unicode exception
+0. 请确保使用支持中文的命令行(如VSCode)，否则如果歌单里有中文歌名/歌手的歌且此歌曲在Spotify无版权，程序会因提示此歌曲无版权而爆unicode exception
 1. 命令行输入`pip install -r requirements.txt`
 2. [创建Spotify app(如没有)](https://developer.spotify.com/documentation/web-api/concepts/apps)
 3. 替换`config.yml`里的所有值，说明如下:
