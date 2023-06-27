@@ -35,6 +35,7 @@ class NeteaseToSpotify:
         spotify_playlist_id = self.get_or_create_playlist()
         # Basically just retrieve all tracks' name and 1st artist in Netease's playlist
         # and do a search using Spotify's Search API
+        print("---------- Starting to Migrate ----------")
         for name, artist in self.get_netease_playlist_tracks_name_and_artist():
             try:
                 track_id = self.search_for_track(name, artist)
