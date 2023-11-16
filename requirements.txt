@@ -2,3 +2,4 @@ spotipy==2.23.0
 pyncm==1.6.8.9.1
 pyyaml==6.0
 pybase64==1.2.3
+alive-progress==3.1.5

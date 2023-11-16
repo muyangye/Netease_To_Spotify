@@ -1,3 +1,4 @@
+from alive_progress import alive_bar
 from pyncm import apis
 import spotipy
 import yaml
@@ -36,13 +37,16 @@ class NeteaseToSpotify:
         # Basically just retrieve all tracks' name and 1st artist in Netease's playlist
         # and do a search using Spotify's Search API
         print("---------- Starting to Migrate ----------")
-        for name, artist in self.get_netease_playlist_tracks_name_and_artist():
+        netease_playlist_tracks_name_and_artist = self.get_netease_playlist_tracks_name_and_artist()
+        # with alive_bar(len(netease_playlist_tracks_name_and_artist)) as bar:
+        for name, artist in netease_playlist_tracks_name_and_artist:
             try:
                 track_id = self.search_for_track(name, artist)
                 self.spotify.playlist_add_items(spotify_playlist_id, [track_id])
             except Exception as e:
                 # print("此歌曲Spotify无版权, 迁移失败: " + name + ", " + artist)
                 print("Spotify does not have this track's copyright: " + name + ", " + artist)
+                # bar()
     
     def get_or_create_playlist(self):
         """
@@ -115,6 +119,12 @@ class NeteaseToSpotify:
         """
         playlist = apis.playlist.GetPlaylistInfo(self.netease_playlist_id)
         track_ids = [track_id["id"] for track_id in playlist["playlist"]["trackIds"]]
-        songs = apis.track.GetTrackDetail(track_ids)["songs"]
+        songs = []
+        # Split track_ids to pieces of length at most 1000 to avoid PyNCM API limitation
+        left, right = 0, 0
+        while right < len(track_ids):
+            right = left + min(1000, len(track_ids) - right)
+            songs.extend(apis.track.GetTrackDetail(track_ids[left:right])["songs"])
+            left = right
         result = [(song["name"], song["ar"][0]["name"]) for song in songs]
         return result

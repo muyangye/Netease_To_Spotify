@@ -2,7 +2,7 @@
 
 # 网易云音乐歌单迁移至Spotify
 
-## 测试成功率: 593/595, 用时: 一分钟左右，已知所有的迁移库中最快成功率最高，保留原歌单顺序，全过程不产生费用
+## 测试成功率: 593/595, 用时: 一分半左右，保留原歌单顺序，全过程不产生费用
 
 ## 运行
 0. 请确保使用支持中文的命令行(如VSCode)，否则如果歌单里有中文歌名/歌手的歌且此歌曲在Spotify无版权，程序会因提示此歌曲无版权而爆unicode exception
@@ -17,7 +17,7 @@
     - `netease_playlist_id`: 想要迁移的网易云音乐歌单id，可通过分享歌单的链接拿到，比如分享链接为https://music.163.com/playlist?id=123456789&userid=xxxxxxxx<span>，歌单id就是123456789</span>
 4. 命令行输入`python cli.py`
 5. 浏览器弹窗提示登录Spotify
-6. 等待运行即可，Spotify无版权的歌曲会在命令行提示
+6. 等待运行即可，命令行会显示进度，Spotify无版权的歌曲也会在命令行提示
 
 ## OAuth 2.0 Client
 虽然用的是Spotipy库，但之前写过一个适用于所有OAuth 2.0 app获取access token的基类，只需替换`OAuth2Client.py`中的`AUTHORIZATION_ENDPOINT`和`ACCESS_TOKEN_ENDPOINT`即可，详见[这篇博客](https://muyangye.github.io/2023/05/10/Netease-to-Spotify/) (不过抱歉是全英文的，因为本人是留学生在美国找工作所以就写了英文博客2333)
