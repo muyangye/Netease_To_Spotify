@@ -59,10 +59,10 @@ class NeteaseToSpotify:
         # First search through all current user's playlists to see if a playlist with the same name already exists
         user_playlists = self.spotify.user_playlists(self.spotify.me()["id"])
         for playlist in user_playlists["items"]:
-            if (playlist["name"] == self.spotify_playlist_name):
+            if playlist["name"] == self.spotify_playlist_name:
                 playlist_id = playlist["id"]
                 break
-        if (not playlist_id):
+        if not playlist_id:
             playlist_id = self.create_playlist()
         return playlist_id
 
@@ -105,7 +105,7 @@ class NeteaseToSpotify:
         # but this approach correctly gives many tracks that are searchable but not
         # found using a more precise search
         query = name
-        if (artist):
+        if artist:
             query += " " + artist
         # Assume the first one is the most relevant
         return self.spotify.search(query, type="track")["tracks"]["items"][0]["id"]
