@@ -38,15 +38,15 @@ class NeteaseToSpotify:
         # and do a search using Spotify's Search API
         print("---------- Starting to Migrate ----------")
         netease_playlist_tracks_name_and_artist = self.get_netease_playlist_tracks_name_and_artist()
-        # with alive_bar(len(netease_playlist_tracks_name_and_artist)) as bar:
-        for name, artist in netease_playlist_tracks_name_and_artist:
-            try:
-                track_id = self.search_for_track(name, artist)
-                self.spotify.playlist_add_items(spotify_playlist_id, [track_id])
-            except Exception as e:
-                # print("此歌曲Spotify无版权, 迁移失败: " + name + ", " + artist)
-                print("Spotify does not have this track's copyright: " + name + ", " + artist)
-                # bar()
+        with alive_bar(len(netease_playlist_tracks_name_and_artist)) as bar:
+            for name, artist in netease_playlist_tracks_name_and_artist:
+                try:
+                    track_id = self.search_for_track(name, artist)
+                    self.spotify.playlist_add_items(spotify_playlist_id, [track_id])
+                except Exception as e:
+                    # print("此歌曲Spotify无版权, 迁移失败: " + name + ", " + artist)
+                    print("Spotify does not have this track's copyright: " + name + ", " + artist)
+                bar()
     
     def get_or_create_playlist(self):
         """
