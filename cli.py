@@ -1,4 +1,5 @@
 from netease_to_spotify import NeteaseToSpotify
+import sys
 
 def main():
     app = NeteaseToSpotify()

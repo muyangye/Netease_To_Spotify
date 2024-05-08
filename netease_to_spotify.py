@@ -1,12 +1,27 @@
-from alive_progress import alive_bar
+from datetime import date
 from pyncm import apis
-import spotipy
-import yaml
+from tqdm import tqdm
+from unidecode import unidecode
 import base64
+import re
+import spotipy
 import sys
+import yaml
+
+# For some reason, Netease's API sometimes returns a publishTime of really weird unix timestamp like year 2240 after converting to time
+# so we need to filter out those strange values
+# This will not affect songs published before unix start, just that in Spotify's search query, will not use the year filter
+# in ms
+UNIX_START = 1000
+# current year + 1, update annually
+NEXT_YEAR = 1735689600000
+MS_PER_S = 1000
+
+DEFAULT_COVER_PATH = "assets/netease.png"
 
 class NeteaseToSpotify:
     def __init__(self):
+        print("---------- Starting Application ----------")
         with open("config.yml", encoding="utf-8") as f:
             config = yaml.safe_load(f)
             try:
@@ -19,12 +34,11 @@ class NeteaseToSpotify:
                     )
                 )
             except:
-                # print("Spotify授权失败, 终止程序")
                 print("Spotify authorization failed, program terminated.")
                 sys.exit()
             self.spotify_playlist_name = config["spotify_playlist_name"]
             # Use netease.png as default Spotify playlist cover image
-            self.cover_image_path = config["cover_image_path"] if config["cover_image_path"] != "DESIRED_SPOTIFY_PLAYLIST_COVER_IMAGE_PATH" else "netease.png"
+            self.cover_image_path = config["cover_image_path"] if config["cover_image_path"] != "DESIRED_SPOTIFY_PLAYLIST_COVER_IMAGE_PATH" else DEFAULT_COVER_PATH
             self.netease_playlist_id = config["netease_playlist_id"]
     
     def migrate(self):
@@ -36,17 +50,16 @@ class NeteaseToSpotify:
         spotify_playlist_id = self.get_or_create_playlist()
         # Basically just retrieve all tracks' name and 1st artist in Netease's playlist
         # and do a search using Spotify's Search API
-        print("---------- Starting to Migrate ----------")
         netease_playlist_tracks_name_and_artist = self.get_netease_playlist_tracks_name_and_artist()
-        with alive_bar(len(netease_playlist_tracks_name_and_artist)) as bar:
-            for name, artist in netease_playlist_tracks_name_and_artist:
-                try:
-                    track_id = self.search_for_track(name, artist)
-                    self.spotify.playlist_add_items(spotify_playlist_id, [track_id])
-                except Exception as e:
-                    # print("此歌曲Spotify无版权, 迁移失败: " + name + ", " + artist)
-                    print("Spotify does not have this track's copyright: " + name + ", " + artist)
-                bar()
+        print("---------- Inserting Songs to Spotify ----------")
+        for name, artist, year in tqdm(netease_playlist_tracks_name_and_artist):
+            # Delete all parentheses because whatever inside will make search return much less/no results
+            trimmed_name = re.sub(r'\(.*\)', '', name)
+            try:
+                track_id = self.search_for_track(year, trimmed_name, artist)
+                self.spotify.playlist_add_items(spotify_playlist_id, [track_id])
+            except Exception as e:
+                print("Spotify does not have this song's copyright: {}, {}".format(unidecode(name), unidecode(artist)))
     
     def get_or_create_playlist(self):
         """
@@ -78,7 +91,6 @@ class NeteaseToSpotify:
             b64_cover_image = self.get_base64_from_image(self.cover_image_path)
             self.spotify.playlist_upload_cover_image(playlist_id, b64_cover_image)
         except Exception as e:
-            # print("创建Spotify歌单失败(歌单封面图像不存在或过大), 终止程序")
             print("Failed to create Spotify playlist (can't find cover_image_path or image is too large), program terminated.")
             sys.exit()
         return playlist_id
@@ -94,21 +106,22 @@ class NeteaseToSpotify:
         base64_utf8_str = base64.b64encode(binary_fc).decode("utf-8")
         return base64_utf8_str
         
-    def search_for_track(self, name, artist=None):
+    def search_for_track(self, year, name, artist=None):
         """
         Search for a track by name and artist (if provided)
 
         :return: the track's Spotify ID
         :rtype: str
         """
-        # This is a very aggressive search, so there may be tracks that mismatch, 
-        # but this approach correctly gives many tracks that are searchable but not
-        # found using a more precise search
-        query = name
+        query = ""
+        # 3 years interval
+        if year != -1:
+            query += "year:{}-{} ".format(year - 1, year + 1)
+        query += name
         if artist:
             query += " " + artist
-        # Assume the first one is the most relevant
-        return self.spotify.search(query, type="track")["tracks"]["items"][0]["id"]
+        # Only search for the most relevant result (first)
+        return self.spotify.search(query, limit=1, type="track")["tracks"]["items"][0]["id"]
     
     def get_netease_playlist_tracks_name_and_artist(self):
         """
@@ -117,6 +130,7 @@ class NeteaseToSpotify:
         :return: list of (name, artist) pairs of all tracks in the playlist
         :rtype: list(tuple(str, str))
         """
+        print("---------- Getting Netease Cloud Music Data (this may take a few seconds) ----------")
         playlist = apis.playlist.GetPlaylistInfo(self.netease_playlist_id)
         track_ids = [track_id["id"] for track_id in playlist["playlist"]["trackIds"]]
         songs = []
@@ -126,5 +140,7 @@ class NeteaseToSpotify:
             right = left + min(1000, len(track_ids) - right)
             songs.extend(apis.track.GetTrackDetail(track_ids[left:right])["songs"])
             left = right
-        result = [(song["name"], song["ar"][0]["name"]) for song in songs]
+        result = [(song["name"], song["ar"][0]["name"], 
+                    date.fromtimestamp(song["publishTime"] / MS_PER_S).year if "publishTime" in song and UNIX_START <= song["publishTime"] <= NEXT_YEAR else -1) 
+                    for song in songs]
         return result
