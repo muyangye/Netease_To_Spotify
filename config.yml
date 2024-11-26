@@ -1,7 +1,5 @@
 ---
-  client_id : "YOUR_CLIENT_ID_HERE"
-  client_secret : "YOUR_CLIENT_SECRET_HERE"
-  redirect_uri : "YOUR_REDIRECT_URI_HERE"
-  spotify_playlist_name : "DESIRED_SPOTIFY_PLAYLIST_NAME"
-  cover_image_path : "DESIRED_SPOTIFY_PLAYLIST_COVER_IMAGE_PATH"
-  netease_playlist_id : "YOUR_NETEASE_PLAYLIST_ID_TO_MIGRATE"
+  client_id : "da373cafd6b84baa85f99782f2e0a7c5"
+  client_secret : "006b162029844e6d8f9787bd042424d5"
+  redirect_uri : "http://example.org"
+  netease_playlist_id : "https://music.163.com/playlist?id=8231195002&userid=58452486"
