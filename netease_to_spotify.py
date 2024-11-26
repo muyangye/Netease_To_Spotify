@@ -7,6 +7,7 @@ import re
 import spotipy
 import sys
 import yaml
+import requests
 
 # For some reason, Netease's API sometimes returns a publishTime of really weird unix timestamp like year 2240 after converting to time
 # so we need to filter out those strange values
@@ -36,21 +37,27 @@ class NeteaseToSpotify:
             except:
                 print("Spotify authorization failed, program terminated.")
                 sys.exit()
-            self.spotify_playlist_name = config["spotify_playlist_name"]
+            # self.spotify_playlist_name = config["spotify_playlist_name"]
             # Use netease.png as default Spotify playlist cover image
-            self.cover_image_path = config["cover_image_path"] if config["cover_image_path"] != "DESIRED_SPOTIFY_PLAYLIST_COVER_IMAGE_PATH" else DEFAULT_COVER_PATH
-            self.netease_playlist_id = config["netease_playlist_id"]
-    
+            # self.cover_image_path = config["cover_image_path"] if config["cover_image_path"] != "DESIRED_SPOTIFY_PLAYLIST_COVER_IMAGE_PATH" else DEFAULT_COVER_PATH
+
+            parsed_netease_url_ret = re.findall(r"https://music\.163\.com/playlist\?id=(\d{3,15}).*", config["netease_playlist_id"])
+            if parsed_netease_url_ret:
+                self.netease_playlist_id = parsed_netease_url_ret[0]
+            else:
+                self.netease_playlist_id = config["netease_playlist_id"]
+
     def migrate(self):
         """
         Migrate the Netease playlist to Spotify
 
         :return: None
         """
-        spotify_playlist_id = self.get_or_create_playlist()
         # Basically just retrieve all tracks' name and 1st artist in Netease's playlist
         # and do a search using Spotify's Search API
         netease_playlist_tracks_name_and_artist = self.get_netease_playlist_tracks_name_and_artist()
+
+        spotify_playlist_id = self.get_or_create_playlist()
         print("---------- Inserting Songs to Spotify ----------")
         for name, artist, year in tqdm(netease_playlist_tracks_name_and_artist):
             # Delete all parentheses because whatever inside will make search return much less/no results
@@ -86,24 +93,27 @@ class NeteaseToSpotify:
         :return: the new playlist's Spotify ID
         :rtype: str
         """
+        print(f"Creating spotify playlist: {self.spotify_playlist_name}")
         playlist_id = self.spotify.user_playlist_create(self.spotify.me()["id"], self.spotify_playlist_name)["id"]
         try:
-            b64_cover_image = self.get_base64_from_image(self.cover_image_path)
+            b64_cover_image = self.get_base64_from_image_url(self.cover_image_path)
             self.spotify.playlist_upload_cover_image(playlist_id, b64_cover_image)
         except Exception as e:
             print("Failed to create Spotify playlist (can't find cover_image_path or image is too large), program terminated.")
             sys.exit()
         return playlist_id
     
-    def get_base64_from_image(self, path):
+    def get_base64_from_image_url(self, path):
         """
         Get the base64 representation of an image
 
         :return: base64 representation
         :rtype: str
         """
-        binary_fc = open(path, "rb").read()
-        base64_utf8_str = base64.b64encode(binary_fc).decode("utf-8")
+        # filename = path.split("/")[-1]
+        response = requests.get(path, stream=True)
+        # binary_fc = open(path, "rb").read()
+        base64_utf8_str = base64.b64encode(response.content).decode("utf-8")
         return base64_utf8_str
         
     def search_for_track(self, year, name, artist=None):
@@ -130,8 +140,13 @@ class NeteaseToSpotify:
         :return: list of (name, artist) pairs of all tracks in the playlist
         :rtype: list(tuple(str, str))
         """
-        print("---------- Getting Netease Cloud Music Data (this may take a few seconds) ----------")
+        print(f"---------- Getting Netease Cloud Music Data With Id: {self.netease_playlist_id} (this may take a few seconds) ----------")
         playlist = apis.playlist.GetPlaylistInfo(self.netease_playlist_id)
+        # print(f"playlist:{playlist}")
+        # preset playlist name and cover image for spotify playlist
+        self.spotify_playlist_name = playlist["playlist"]["name"]
+        self.cover_image_path = playlist["playlist"]["coverImgUrl"]
+
         track_ids = [track_id["id"] for track_id in playlist["playlist"]["trackIds"]]
         songs = []
         # Split track_ids to pieces of length at most 1000 to avoid PyNCM API limitation
