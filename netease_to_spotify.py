@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from pyncm import apis
 from tqdm import tqdm
 from unidecode import unidecode
@@ -8,16 +8,17 @@ import spotipy
 import sys
 import yaml
 
+
+DEFAULT_COVER_PATH = "assets/netease.png"
+SPOTIFY_SCOPES = "playlist-modify-public playlist-modify-private user-library-read ugc-image-upload"
+
 # For some reason, Netease's API sometimes returns a publishTime of really weird unix timestamp like year 2240 after converting to time
 # so we need to filter out those strange values
 # This will not affect songs published before unix start, just that in Spotify's search query, will not use the year filter
 # in ms
 UNIX_START = 1000
-# current year + 1, update annually
-NEXT_YEAR = 1735689600000
 MS_PER_S = 1000
-
-DEFAULT_COVER_PATH = "assets/netease.png"
+NEXT_YEAR = datetime(datetime.now().year + 1, 1, 1).timestamp() * MS_PER_S
 
 class NeteaseToSpotify:
     def __init__(self):
@@ -30,7 +31,7 @@ class NeteaseToSpotify:
                         client_id=config["client_id"],
                         client_secret=config["client_secret"],
                         redirect_uri=config["redirect_uri"],
-                        scope="playlist-modify-public playlist-modify-private user-library-read ugc-image-upload"
+                        scope=SPOTIFY_SCOPES
                     )
                 )
             except:
@@ -59,7 +60,7 @@ class NeteaseToSpotify:
                 track_id = self.search_for_track(year, trimmed_name, artist)
                 self.spotify.playlist_add_items(spotify_playlist_id, [track_id])
             except Exception as e:
-                print("Spotify does not have this song's copyright: {}, {}".format(unidecode(name), unidecode(artist)))
+                print(f"Spotify does not have this song's copyright: {unidecode(name)}, {unidecode(artist)}")
     
     def get_or_create_playlist(self):
         """
@@ -116,7 +117,7 @@ class NeteaseToSpotify:
         query = ""
         # 3 years interval
         if year != -1:
-            query += "year:{}-{} ".format(year - 1, year + 1)
+            query += f"year:{year - 1}-{year + 1} "
         query += name
         if artist:
             query += " " + artist
@@ -140,7 +141,8 @@ class NeteaseToSpotify:
             right = left + min(1000, len(track_ids) - right)
             songs.extend(apis.track.GetTrackDetail(track_ids[left:right])["songs"])
             left = right
-        result = [(song["name"], song["ar"][0]["name"], 
-                    date.fromtimestamp(song["publishTime"] / MS_PER_S).year if "publishTime" in song and UNIX_START <= song["publishTime"] <= NEXT_YEAR else -1) 
-                    for song in songs]
+        result = [(song["name"],
+                   song["ar"][0]["name"], 
+                   date.fromtimestamp(song["publishTime"] / MS_PER_S).year if "publishTime" in song and UNIX_START <= song["publishTime"] <= NEXT_YEAR else -1)
+                for song in songs]
         return result
