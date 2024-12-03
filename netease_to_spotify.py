@@ -1,4 +1,6 @@
 from datetime import date
+
+import pyncm
 from pyncm import apis
 from tqdm import tqdm
 from unidecode import unidecode
@@ -40,12 +42,9 @@ class NeteaseToSpotify:
             # self.spotify_playlist_name = config["spotify_playlist_name"]
             # Use netease.png as default Spotify playlist cover image
             # self.cover_image_path = config["cover_image_path"] if config["cover_image_path"] != "DESIRED_SPOTIFY_PLAYLIST_COVER_IMAGE_PATH" else DEFAULT_COVER_PATH
-
-            parsed_netease_url_ret = re.findall(r"https://music\.163\.com/playlist\?id=(\d{3,15}).*", config["netease_playlist_id"])
-            if parsed_netease_url_ret:
-                self.netease_playlist_id = parsed_netease_url_ret[0]
-            else:
-                self.netease_playlist_id = config["netease_playlist_id"]
+            self.spotify_playlist_name = ""
+            self.cover_image_path = config["cover_image_path"]
+            self.netease_playlist_id = config["netease_playlist_id"]
 
     def migrate(self):
         """
@@ -93,14 +92,19 @@ class NeteaseToSpotify:
         :return: the new playlist's Spotify ID
         :rtype: str
         """
-        print(f"Creating spotify playlist: {self.spotify_playlist_name}")
+        print(f"Creating spotify playlist: {self.spotify_playlist_name}, {self.cover_image_path}")
         playlist_id = self.spotify.user_playlist_create(self.spotify.me()["id"], self.spotify_playlist_name)["id"]
         try:
-            b64_cover_image = self.get_base64_from_image_url(self.cover_image_path)
+            b64_cover_image = self.get_base64_from_image_url(self.cover_image_path) \
+                if self.cover_image_path.startswith("http") else self.get_base64_from_image_file(self.cover_image_path)
+            if len(b64_cover_image) / 1024 > 256:
+                print(f"The Specific image is too large, using default cover image: {DEFAULT_COVER_PATH}")
+                b64_cover_image = self.get_base64_from_image_file(DEFAULT_COVER_PATH)
+
             self.spotify.playlist_upload_cover_image(playlist_id, b64_cover_image)
         except Exception as e:
-            print("Failed to create Spotify playlist (can't find cover_image_path or image is too large), program terminated.")
-            sys.exit()
+            print(f"Failed to create Spotify playlist (can't find cover_image_path or image is too large):{e}")
+            # sys.exit()
         return playlist_id
     
     def get_base64_from_image_url(self, path):
@@ -115,7 +119,18 @@ class NeteaseToSpotify:
         # binary_fc = open(path, "rb").read()
         base64_utf8_str = base64.b64encode(response.content).decode("utf-8")
         return base64_utf8_str
-        
+
+    def get_base64_from_image_file(self, path):
+        """
+        Get the base64 representation of an image
+
+        :return: base64 representation
+        :rtype: str
+        """
+        binary_fc = open(path, "rb").read()
+        base64_utf8_str = base64.b64encode(binary_fc).decode("utf-8")
+        return base64_utf8_str
+
     def search_for_track(self, year, name, artist=None):
         """
         Search for a track by name and artist (if provided)
@@ -145,7 +160,8 @@ class NeteaseToSpotify:
         # print(f"playlist:{playlist}")
         # preset playlist name and cover image for spotify playlist
         self.spotify_playlist_name = playlist["playlist"]["name"]
-        self.cover_image_path = playlist["playlist"]["coverImgUrl"]
+        if not self.cover_image_path or self.cover_image_path == "DESIRED_SPOTIFY_PLAYLIST_COVER_IMAGE_PATH":
+            self.cover_image_path = playlist["playlist"]["coverImgUrl"]
 
         track_ids = [track_id["id"] for track_id in playlist["playlist"]["trackIds"]]
         songs = []

@@ -11,7 +11,8 @@
     - `client_id`: Spotify app的Client ID
     - `client_id`: Spotify app的Client secret
     - `redirect_uri`: Spotify app的Redirect URIs中任意一个
-    - `netease_playlist_id`: 想要迁移的网易云音乐歌单链接（推荐）或id，可通过网易云音乐Web端歌单链接或客户端分享-链接分享获取，比如链接为https://music.163.com/playlist?id=123456789&userid=xxxxxxxx<span>，歌单id就是123456789</span>
+   - `cover_image_path`: 新歌单封面图路径(图像大小必须小于256 KB)，如歌单已存在则不适用，默认从网易云歌单中提取封面图，若指定或提取的封面图大于256 KB，则降级取repo里的"assets/netease.png"
+   - `netease_playlist_id`: 想要迁移的网易云音乐歌单id，可通过网易云音乐Web端歌单链接拿到，比如链接为https://music.163.com/playlist?id=123456789&userid=xxxxxxxx<span>，歌单id就是123456789</span>
 4. 命令行输入`python cli.py`
 5. 浏览器弹窗提示登录Spotify
 6. 等待运行即可，命令行会显示进度，Spotify无版权的歌曲也会在命令行提示(详见下方)
