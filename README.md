@@ -32,7 +32,7 @@
 为避免unicode exception，非英文的无版权歌曲会用字母提示![](assets/043655bf07fc66a9e36e0f7570b33d5.png)
 
 ## OAuth 2.0 Client
-虽然用的是Spotipy库，但之前写过一个适用于所有OAuth 2.0 app获取access token的基类，只需替换`OAuth2Client.py`中的`AUTHORIZATION_ENDPOINT`和`ACCESS_TOKEN_ENDPOINT`即可，详见[这篇博客](https://muyangye.github.io/2023/05/10/Netease-to-Spotify/) (不过抱歉是全英文的，因为本人是留学生在美国找工作所以就写了英文博客2333)
+虽然用的是Spotipy库，但之前写过一个适用于所有OAuth 2.0 app获取access token的基类，只需替换`OAuth2Client.py`中的`AUTHORIZATION_ENDPOINT`和`ACCESS_TOKEN_ENDPOINT`即可，详见[这篇博客](https://muyangye.github.io/portfolio/portfolio-2/) (不过抱歉是全英文的，因为本人是留学生在美国找工作所以就写了英文博客2333)
 
 ## 鸣谢
 - [pyncm](https://github.com/mos9527/pyncm): 感谢老哥的网易云音乐API，真不理解为啥网易云音乐只开放API给合作方
