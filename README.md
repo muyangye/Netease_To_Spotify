@@ -17,6 +17,8 @@
 5. 浏览器弹窗提示登录Spotify
 6. 等待运行即可，命令行会显示进度，Spotify无版权的歌曲也会在命令行提示(详见下方)
 
+## 歌单名为网易云歌单名，如Spotify有同名歌单也会创建新的歌单，改名/合并歌单都可以在Spotify直接操作
+
 ## "无版权"歌曲
 由于之前版本经常会出现名字完全不同的歌也被加到Spotify里，现加入[year search query filter](https://developer.spotify.com/documentation/web-api/reference/search)缩小搜索范围（大幅减少，不代表完全没有了），但由于网易云音乐歌曲的收录时间可能和Spotify不同，这样会导致很多歌Spotify明明有，但是程序说没有。个人认为这样比不加year search query filter好处理，因为后者不易察觉，前者只需手动再加一次就好了，以下两种类型的歌曲最容易触发“无版权”:
   - 年代久远的歌，Spotify显示原发行日期而网易云音乐显示开始有版权的日期，如

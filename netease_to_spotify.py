@@ -57,7 +57,8 @@ class NeteaseToSpotify:
         cover_image_path = netease_playlist["playlist"]["coverImgUrl"] \
             if self.cover_image_path == "DESIRED_SPOTIFY_PLAYLIST_COVER_IMAGE_PATH" else self.cover_image_path
         
-        spotify_playlist_id = self.get_or_create_playlist(netease_playlist["playlist"]["name"], cover_image_path)
+        # Create a Spotify playlist using the specified name and cover image
+        spotify_playlist_id = self.create_playlist(netease_playlist["playlist"]["name"], cover_image_path)
 
         # Search all tracks of the Netease playlist in Spotify
         print("---------- Inserting Songs to Spotify ----------")
@@ -69,24 +70,6 @@ class NeteaseToSpotify:
                 self.spotify.playlist_add_items(spotify_playlist_id, [track_id])
             except Exception as e:
                 print(f"Spotify does not have this song's copyright: {unidecode(name)}, {unidecode(artist)}")
-    
-    def get_or_create_playlist(self, name, cover_image_path):
-        """
-        Get or create Spotify's playlist with the specified name and cover image path
-
-        :return: the playlist's internal Spotify ID (hash)
-        :rtype: str
-        """
-        playlist_id = None
-        # First search through all current user's playlists to see if a playlist with the same name already exists
-        user_playlists = self.spotify.user_playlists(self.spotify.me()["id"])
-        for playlist in user_playlists["items"]:
-            if playlist["name"] == name:
-                playlist_id = playlist["id"]
-                break
-        if not playlist_id:
-            playlist_id = self.create_playlist(name, cover_image_path)
-        return playlist_id
 
     def create_playlist(self, name, cover_image_path):
         """
