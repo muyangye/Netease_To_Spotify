@@ -3,3 +3,4 @@
 .cache
 venv/
 __pycache__/
+config.yml
