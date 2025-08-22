@@ -42,15 +42,22 @@ class NeteaseToSpotify:
             self.cover_image_path = config["cover_image_path"]
             self.netease_playlist_id = config["netease_playlist_id"]
 
-    def migrate(self):
+    def migrate(self, netease_playlist_ids = None):
         """
         Migrate the Netease playlist to Spotify
+        ids: list of Netease playlist ids, if not provided, will use the one specified in config.yml
 
         :return: None
         """
+        if netease_playlist_ids is None:
+            netease_playlist_ids = [self.netease_playlist_id]
+        for netease_playlist_id in netease_playlist_ids:
+            self.migrate_playlist(netease_playlist_id)
+
+    def migrate_playlist(self, netease_playlist_id):
         # Retrieve the Netease playlist's data (name, cover image url, all tracks' name and 1st artist)
-        print(f"---------- Getting Netease Cloud Music Data With Id: {self.netease_playlist_id} (this may take a few seconds) ----------")
-        netease_playlist = apis.playlist.GetPlaylistInfo(self.netease_playlist_id)
+        print(f"---------- Getting Netease Cloud Music Data With Id: {netease_playlist_id} (this may take a few seconds) ----------")
+        netease_playlist = apis.playlist.GetPlaylistInfo(netease_playlist_id)
         netease_playlist_tracks_name_and_artist = self.get_netease_playlist_tracks_name_and_artist(netease_playlist)
         
         # If user has not defined a custom cover image, use the cover image from the Netease playlist

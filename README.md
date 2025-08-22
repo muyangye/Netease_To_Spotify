@@ -13,7 +13,7 @@
     - `redirect_uri`: Spotify app的Redirect URIs中任意一个
     - `cover_image_path`: 新歌单封面图路径，如未改变默认值（DESIRED_SPOTIFY_PLAYLIST_COVER_IMAGE_PATH）则取用网易云歌单的封面图，因Spotify封面图大小限制，如自定义/网易云封面图大小超过256KB则降级用repo里的"assets/netease.png"
     - `netease_playlist_id`: 想要迁移的网易云音乐歌单id，可通过网易云音乐Web端歌单链接拿到，比如链接为https://music.163.com/playlist?id=123456789&userid=xxxxxxxx<span>，歌单id就是123456789</span>
-4. 命令行输入`python cli.py`
+4. 命令行输入`python cli.py`，也可以使用`python cli.py -l <ID1> <ID2> <ID3>`来批量导入多个歌单，此时`config.yml`里的歌单ID会被忽略
 5. 浏览器弹窗提示登录Spotify
 6. 等待运行即可，命令行会显示进度，Spotify无版权的歌曲也会在命令行提示(详见下方)
 
